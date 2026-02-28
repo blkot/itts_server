@@ -137,6 +137,215 @@ Brief version:
 
 ---
 
+## Code Review Workflow
+
+**How the review cycle works between you, Codex AI, and Claude (reviewer):**
+
+### The Cycle
+
+```
+┌─────────────────┐
+│   You ask Codex │
+│   to implement  │
+│   a step/phase  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Codex writes  │
+│   code + tests  │
+│   & commits     │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Codex stops   │
+│   and waits     │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   You ask Claude│
+│   to review     │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Claude reviews│
+│   & provides    │
+│   feedback      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   You give      │
+│   Claude's      │
+│   feedback to   │
+│   Codex         │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Codex fixes   │
+│   & commits     │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Repeat review │
+│   until APPROVED│
+└─────────────────┘
+```
+
+### How to Request Review
+
+**After Codex completes a step/phase:**
+
+```bash
+# 1. Check the commit
+git log -1 --stat
+
+# 2. Show me the changes
+git diff HEAD~1 HEAD
+
+# 3. Ask me to review
+# Say: "Claude, please review the latest commit from Codex"
+```
+
+### Claude's Review Format
+
+**My review will look like this:**
+
+```
+## Review: <commit message>
+
+### Status: ✅ APPROVED / ⚠️ NEEDS FIXES
+
+### What was changed:
+- Added Bundle model with SHA-256 unique constraint
+- Implemented check_duplicate() method
+- Added unit tests
+
+### Issues found:
+
+#### 🔴 Critical (must fix before proceeding):
+1. Missing foreign key cascade delete on Bundle.segments
+   - Location: app/models/database.py:45
+   - Fix: Add `ondelete="CASCADE"` to the ForeignKey
+
+#### 🟡 Suggestions (recommended but not blocking):
+1. Consider adding docstring to check_duplicate()
+   - Not blocking, but would improve readability
+
+### Security check:
+- ✅ No hardcoded credentials
+- ✅ Path traversal protected
+- ⚠️ File size limit not implemented yet (add this in upload endpoint)
+
+### Test coverage:
+- ✅ Unit tests added
+- ⚠️ Test for duplicate detection scenario missing
+
+### Next steps:
+1. Fix critical issues
+2. Commit fixes
+3. Request re-review
+```
+
+### How to Pass My Review to Codex
+
+**Copy my review feedback and paste to Codex with this format:**
+
+```
+Claude reviewed your code and found issues that need fixing:
+
+## Critical Issues (must fix):
+1. Missing foreign key cascade delete on Bundle.segments
+   Location: app/models/database.py:45
+   Fix: Add `ondelete="CASCADE"` to the ForeignKey
+
+Please fix these issues, commit the fixes, and stop for review again.
+```
+
+### Re-review Cycle
+
+**After Codex makes fixes:**
+
+```
+┌─────────────────┐
+│   Codex commits │
+│   fixes         │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   You ask Claude│
+│   to RE-review   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Claude checks │
+│   if fixes work │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+  Fixed    Still broken
+    │         │
+    ▼         ▼
+ ✅ APPROVED  🔄 More fixes needed
+    │         │
+    ▼         ▼
+ Next step  Repeat cycle
+```
+
+### Quick Review Commands
+
+**When asking me to review, provide:**
+
+```bash
+# Option 1: Show the commit
+git log -1 --patch
+
+# Option 2: Show files changed
+git show HEAD --stat
+
+# Option 3: Show specific file
+git show HEAD:app/models/database.py
+```
+
+### My Review Response Types
+
+| Response | Meaning | What to do |
+|----------|---------|------------|
+| `✅ APPROVED` | No issues found | Proceed to next step |
+| `⚠️ MINOR FIXES` | Small issues, clear how to fix | Fix quickly, re-review |
+| `🔴 CRITICAL ISSUES` | Major problems, design concerns | Stop, discuss before fixing |
+| `❌ REJECTED` | Wrong approach, needs redesign | Discuss and re-plan |
+
+### Example Full Cycle
+
+**You:** "Codex, implement Task 4: Create SQLAlchemy Models"
+
+**Codex:** *Implements and commits* → "Done, stopped for review"
+
+**You:** "Claude, please review Codex's latest commit" → *shows git log -1*
+
+**Claude:** *Provides detailed review* → "Status: ⚠️ NEEDS FIXES - Missing cascade delete..."
+
+**You:** *Pastes review to Codex* → "Claude found issues. Please fix: ..."
+
+**Codex:** *Fixes and commits* → "Fixed, stopped for re-review"
+
+**You:** "Claude, please re-review" → *shows git log -1*
+
+**Claude:** "Status: ✅ APPROVED - All issues fixed"
+
+**You:** "Codex, proceed to Task 5"
+
+---
+
 ## Code Review Instructions
 
 **For the AI Implementer (Codex):**
