@@ -1,0 +1,389 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://indextts.local/schema/bundle.schema.json",
+  "title": "IndexTTS Bundle Manifest",
+  "description": "Manifest schema for .itts (ZIP) bundles.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "format",
+    "version",
+    "bundle_id",
+    "created_at",
+    "prompt",
+    "playback",
+    "generated_audio",
+    "reference_audio",
+    "emotion_audio"
+  ],
+  "properties": {
+    "format": {
+      "const": "index-tts-bundle"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "bundle_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "prompt": {
+      "$ref": "#/$defs/prompt"
+    },
+    "playback": {
+      "$ref": "#/$defs/playback"
+    },
+    "generated_audio": {
+      "$ref": "#/$defs/generatedAudio"
+    },
+    "reference_audio": {
+      "$ref": "#/$defs/titledAudioAsset"
+    },
+    "emotion_audio": {
+      "$ref": "#/$defs/titledAudioAsset"
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "app": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "settings": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "safeRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![A-Za-z]:)(?!/)(?!\\\\)(?!.*\\.\\./)(?!.*\\.\\.\\\\).+$"
+    },
+    "audioAsset": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "path",
+        "mime_type"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/safeRelativePath"
+        },
+        "mime_type": {
+          "type": "string",
+          "pattern": "^audio\\/[A-Za-z0-9.+-]+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[A-Fa-f0-9]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "duration_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sample_rate_hz": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "channels": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "titledAudioAsset": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/audioAsset"
+        },
+        {
+          "type": "object",
+          "required": [
+            "title"
+          ],
+          "properties": {
+            "title": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "promptSegment": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "index",
+        "text"
+      ],
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "text": {
+          "type": "string"
+        },
+        "token_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "start_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end_ms": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "prompt": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "text"
+      ],
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "language": {
+          "type": "string"
+        },
+        "segments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/promptSegment"
+          }
+        }
+      }
+    },
+    "generatedSegmentAsset": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/audioAsset"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "index"
+          ],
+          "properties": {
+            "index": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "text": {
+              "type": "string"
+            },
+            "start_ms": {
+              "type": "number",
+              "minimum": 0
+            },
+            "end_ms": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      ]
+    },
+    "playback": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "default_source",
+        "fallback_order",
+        "segment_order"
+      ],
+      "properties": {
+        "default_source": {
+          "type": "string",
+          "enum": [
+            "combined",
+            "segments"
+          ]
+        },
+        "fallback_order": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "combined",
+              "segments"
+            ]
+          }
+        },
+        "segment_order": {
+          "type": "string",
+          "const": "index_asc"
+        }
+      }
+    },
+    "generatedAudio": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "combined",
+            "segments",
+            "both"
+          ]
+        },
+        "combined": {
+          "$ref": "#/$defs/audioAsset"
+        },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/generatedSegmentAsset"
+          }
+        },
+        "segment_index_policy": {
+          "type": "string",
+          "const": "zero_based_contiguous"
+        },
+        "segments_count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "combined"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "combined"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "segments"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "segments",
+              "segment_index_policy",
+              "segments_count"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "both"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "combined",
+              "segments",
+              "segment_index_policy",
+              "segments_count"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "generated_audio": {
+            "properties": {
+              "mode": {
+                "const": "combined"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "playback": {
+            "properties": {
+              "default_source": {
+                "const": "combined"
+              },
+              "fallback_order": {
+                "items": {
+                  "const": "combined"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "generated_audio": {
+            "properties": {
+              "mode": {
+                "const": "segments"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "playback": {
+            "properties": {
+              "default_source": {
+                "const": "segments"
+              },
+              "fallback_order": {
+                "items": {
+                  "const": "segments"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
