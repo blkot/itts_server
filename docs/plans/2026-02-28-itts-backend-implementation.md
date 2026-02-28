@@ -126,6 +126,14 @@ Brief version:
 - [ ] SQL injection protected
 - [ ] File uploads validated
 - [ ] Async patterns correct
+- [ ] **Commits are frequent and descriptive** (each step committed!)
+
+**Git commit quality check:**
+- [ ] Each step has its own commit
+- [ ] Commit messages follow conventional commits format (feat:, fix:, test:, docs:)
+- [ ] Phase summary commits include detailed body
+- [ ] No "WIP" or "update" commits
+- [ ] Each commit can be reverted independently
 
 ---
 
@@ -135,8 +143,30 @@ Brief version:
 - Follow this plan task-by-task in order
 - Write tests FIRST (TDD approach)
 - Run tests after each task
-- Commit after each working task
+- **COMMIT AFTER EACH STEP** (red, green, commit cycle)
+- **COMMIT AFTER EACH PHASE** with descriptive phase summary
 - Don't skip ahead - each task builds on previous
+
+**Git Commit Pattern:**
+```bash
+# After each step within a task
+git add <files-changed>
+git commit -m "feat: <brief description of what this step does>"
+
+# After completing a full task (all steps)
+git add <task-files>
+git commit -m "feat(task): complete <task name>"
+
+# After completing a full phase
+git add <phase-files>
+git commit -m "feat(phase): complete <phase name>
+
+- Implemented X service
+- Added Y endpoint
+- Added tests for Z
+- All tests passing
+"
+```
 
 **For the Code Reviewer:**
 - Review after each phase (group of related tasks)
@@ -3430,6 +3460,9 @@ This implementation plan covers:
 - Missing type hints
 - No tests for new code
 - Commit messages like "fix" or "update" (should be descriptive)
+- **Too few commits** (should be ~30-40 commits for entire project)
+- **Large commits** (each step should be separate)
+- **Missing tests in commits** (test and implementation should be separate commits)
 
 **Quick validation commands:**
 ```bash
@@ -3457,14 +3490,52 @@ docker-compose build
 
 **Follow this plan in order:**
 1. Complete tasks 1-3 (Foundation)
-2. ⚠️ **STOP** - Request Phase 1 review
+2. ⚠️ **STOP** - Commit phase, request Phase 1 review
 3. Complete tasks 4-5 (Models)
-4. ⚠️ **STOP** - Request Phase 2 review
+4. ⚠️ **STOP** - Commit phase, request Phase 2 review
 5. Continue phase-by-phase with reviews between
+
+**CRITICAL: Commit frequently!**
+- ✅ Commit after EACH STEP (test write, test run, implementation, test run)
+- ✅ Commit after EACH TASK when all steps pass
+- ✅ Commit after EACH PHASE with detailed summary
+- ❌ DON'T wait until end of phase to commit
+- ❌ DON'T batch multiple unrelated changes in one commit
+
+**Commit message format:**
+```bash
+# After a step within a task
+git add app/models/database.py tests/unit/test_models.py
+git commit -m "feat: add Bundle model with SHA-256 unique constraint"
+
+# After completing a full task
+git add app/services/bundle_service.py tests/unit/test_bundle_service.py
+git commit -m "feat: implement bundle service with CRUD operations
+
+- Added create_bundle() method
+- Added check_duplicate() for SHA-256 deduplication
+- Implemented auto-playlist creation
+- Added unit tests with mocked dependencies
+- All tests passing
+"
+
+# After completing a full phase
+git add app/api/ app/models/ tests/
+git commit -m "feat(phase): complete API endpoints phase
+
+- Implemented bundle upload endpoint
+- Added pack endpoint for raw files
+- Added export and concat endpoints
+- Implemented error handling (404, 409, 422)
+- Added integration tests
+- All phase gate criteria met
+"
+```
 
 **After each phase:**
 - Run all tests: `uv run pytest -v`
 - Run manual tests: `./scripts/manual_test.sh`
+- Commit the phase with detailed summary
 - Request code review before proceeding
 - Address any review feedback before next phase
 
