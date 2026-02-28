@@ -214,57 +214,33 @@ git diff HEAD~1 HEAD
 
 ### Claude's Review Format
 
-**My review will look like this:**
+**I will update the shared `CODE_REVIEW_PROGRESS.md` file with my review.**
 
-```
-## Review: <commit message>
+After each review, I'll update the relevant section in that file with:
+- Status (✅ APPROVED / ⚠️ NEEDS FIXES / 🔴 CRITICAL / ❌ REJECTED)
+- Issues found (with file locations and fixes)
+- Security, test coverage, and code quality checks
+- Next steps
 
-### Status: ✅ APPROVED / ⚠️ NEEDS FIXES
+### How Codex Uses the Review File
 
-### What was changed:
-- Added Bundle model with SHA-256 unique constraint
-- Implemented check_duplicate() method
-- Added unit tests
+**After Codex completes a step:**
+1. Codex commits the changes
+2. Codex says "Done, stopped for review"
+3. I update `CODE_REVIEW_PROGRESS.md` with my review
+4. **Codex reads `CODE_REVIEW_PROGRESS.md` to see what needs fixing**
+5. Codex fixes the issues
+6. Codex commits the fixes
+7. Codex says "Fixed, stopped for re-review"
+8. I re-review and update `CODE_REVIEW_PROGRESS.md` with resolution
 
-### Issues found:
+**Codex command to see current review status:**
+```bash
+# View the review progress file
+cat CODE_REVIEW_PROGRESS.md
 
-#### 🔴 Critical (must fix before proceeding):
-1. Missing foreign key cascade delete on Bundle.segments
-   - Location: app/models/database.py:45
-   - Fix: Add `ondelete="CASCADE"` to the ForeignKey
-
-#### 🟡 Suggestions (recommended but not blocking):
-1. Consider adding docstring to check_duplicate()
-   - Not blocking, but would improve readability
-
-### Security check:
-- ✅ No hardcoded credentials
-- ✅ Path traversal protected
-- ⚠️ File size limit not implemented yet (add this in upload endpoint)
-
-### Test coverage:
-- ✅ Unit tests added
-- ⚠️ Test for duplicate detection scenario missing
-
-### Next steps:
-1. Fix critical issues
-2. Commit fixes
-3. Request re-review
-```
-
-### How to Pass My Review to Codex
-
-**Copy my review feedback and paste to Codex with this format:**
-
-```
-Claude reviewed your code and found issues that need fixing:
-
-## Critical Issues (must fix):
-1. Missing foreign key cascade delete on Bundle.segments
-   Location: app/models/database.py:45
-   Fix: Add `ondelete="CASCADE"` to the ForeignKey
-
-Please fix these issues, commit the fixes, and stop for review again.
+# Or search for current task
+grep -A 30 "Task 1:" CODE_REVIEW_PROGRESS.md
 ```
 
 ### Re-review Cycle
@@ -3826,10 +3802,14 @@ uv run pytest --cov=app --cov-report=term-missing
 
 1. **Codex completes step** → stops
 2. **You**: "Claude, review latest commit"
-3. **Claude**: Provides detailed review (APPROVED / NEEDS FIXES / CRITICAL)
-4. **You**: Paste feedback to Codex
-5. **Codex**: Fixes and commits
-6. **Repeat until APPROVED**
-7. **Proceed to next step**
+3. **Claude**: Updates `CODE_REVIEW_PROGRESS.md` with detailed review
+4. **Codex**: Reads `CODE_REVIEW_PROGRESS.md` to see issues
+5. **Codex**: Fixes issues, commits, stops
+6. **You**: "Claude, please re-review"
+7. **Claude**: Updates `CODE_REVIEW_PROGRESS.md` with resolution
+8. **Repeat until APPROVED**
+9. **Proceed to next step
+
+**Key file:** `CODE_REVIEW_PROGRESS.md` - shared review tracker**
 
 ---
