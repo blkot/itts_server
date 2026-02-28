@@ -13,6 +13,7 @@ class BundleResponse(BaseModel):
     title: str
     filename: str
     s3_key: str
+    generated_audio_sha256: Optional[str] = None
     reference_voice: Optional[str] = None
     emotion_voice: Optional[str] = None
     mode: Optional[str] = None
