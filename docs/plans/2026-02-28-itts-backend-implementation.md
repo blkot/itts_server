@@ -3778,3 +3778,58 @@ git commit -m "feat(phase): complete API endpoints phase
 2. Duplicate detection only triggers on same generated audio SHA-256
 
 ---
+
+## Quick Reference Card
+
+### ⚡ Quick Commands
+
+```bash
+# Review latest commit
+git log -1 --patch
+
+# Show what changed
+git diff HEAD~1 HEAD
+
+# Run tests
+uv run pytest -v
+
+# Check coverage
+uv run pytest --cov=app --cov-report=term-missing
+```
+
+### 📋 Review Checklist (Fast Version)
+
+- [ ] Tests pass?
+- [ ] Type hints present?
+- [ ] No hardcoded paths?
+- [ ] Proper error handling?
+- [ ] Commits frequent and descriptive?
+
+### 🚨 Red Flags (Instant Reject)
+
+- Bare `except:` clauses
+- No type hints
+- Hardcoded credentials
+- Reimplementing `bundle_tools`
+- Loading full files in memory
+- Missing tests
+
+### ✅ Green Flags (Good to Go)
+
+- Reuses `bundle_tools.itts_common`
+- Async with proper context managers
+- Streaming large files
+- Descriptive commit messages
+- Test + implementation separate commits
+
+### 🔄 Review Cycle Summary
+
+1. **Codex completes step** → stops
+2. **You**: "Claude, review latest commit"
+3. **Claude**: Provides detailed review (APPROVED / NEEDS FIXES / CRITICAL)
+4. **You**: Paste feedback to Codex
+5. **Codex**: Fixes and commits
+6. **Repeat until APPROVED**
+7. **Proceed to next step**
+
+---
