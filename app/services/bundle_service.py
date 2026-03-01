@@ -39,6 +39,8 @@ class BundleService:
         emotion_voice: Optional[str] = None,
         mode: Optional[str] = None,
         total_duration_ms: Optional[int] = None,
+        is_concatenated: bool = False,
+        source_bundle_ids: Optional[str] = None,
     ) -> BundleResponse:
         """Create a bundle, attach segments, and maintain auto-playlists in one transaction."""
         bundle = Bundle(
@@ -51,6 +53,8 @@ class BundleService:
             emotion_voice=emotion_voice,
             mode=mode,
             total_duration_ms=total_duration_ms,
+            is_concatenated=is_concatenated,
+            source_bundle_ids=source_bundle_ids,
         )
         self.db.add(bundle)
         await self.db.flush()
