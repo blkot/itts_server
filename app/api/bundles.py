@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,6 +8,7 @@ from app.db.session import get_db
 from app.models.database import Bundle
 from app.models.schemas import BundleListResponse, BundleResponse, SegmentResponse
 from app.services.bundle_service import BundleService
+from app.services.pack_service import PackService
 from app.services.storage_service import StorageService
 
 MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
@@ -125,6 +126,50 @@ async def list_bundles(
     total = int(result.scalar() or 0)
 
     return BundleListResponse(total=total, items=items, page=page, page_size=page_size)
+
+
+@router.post("/pack", response_model=BundleResponse, status_code=status.HTTP_201_CREATED)
+async def pack_bundle(
+    title: str = Form(...),
+    prompt_text: str = Form(...),
+    reference_title: str = Form(...),
+    emotion_title: str = Form(...),
+    generated_combined: UploadFile = File(...),
+    reference_audio: UploadFile = File(...),
+    emotion_audio: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+) -> BundleResponse:
+    """Pack raw audio files into a new ITTS bundle."""
+    generated_data = await _read_upload_with_limit(generated_combined)
+    reference_data = await _read_upload_with_limit(reference_audio)
+    emotion_data = await _read_upload_with_limit(emotion_audio)
+
+    bundle_service = BundleService(db)
+    storage_service = StorageService()
+    pack_service = PackService(bundle_service, storage_service)
+
+    result = await pack_service.pack_from_raw_files(
+        title=title,
+        prompt_text=prompt_text,
+        reference_title=reference_title,
+        emotion_title=emotion_title,
+        generated_combined=generated_data,
+        reference_audio=reference_data,
+        emotion_audio=emotion_data,
+    )
+
+    if result["status"] == "duplicate":
+        existing = result["existing_bundle"]
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "status": "duplicate",
+                "message": "This ITTS already exists in your library",
+                "existing_bundle": existing.model_dump(),
+            },
+        )
+
+    return result["bundle"]
 
 
 @router.get("/{bundle_id}", response_model=BundleResponse)
