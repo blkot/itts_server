@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.backup import router as backup_router
 from app.api.bundles import router as bundles_router
 from app.api.export import router as export_router
 from app.api.playlists import router as playlists_router
@@ -15,6 +16,7 @@ app.include_router(bundles_router)
 app.include_router(export_router)
 app.include_router(playlists_router)
 app.include_router(search_router)
+app.include_router(backup_router)
 
 
 @app.get("/health")
