@@ -84,3 +84,58 @@ async def test_export_workflow(db_session) -> None:
                     pytest.fail("Export job did not complete")
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_concat_workflow(db_session) -> None:
+    async def override_get_db():
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    fake_minio = _FakeMinio()
+
+    try:
+        with patch("app.services.storage_service.get_minio_client", return_value=fake_minio):
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                with open("tests/fixtures/spk_1772197182_1772197202988.itts", "rb") as f1:
+                    r1 = await client.post(
+                        "/api/bundles",
+                        files={"file": ("test1.itts", f1, "application/octet-stream")},
+                    )
+                assert r1.status_code == 201
+                bundle_id_1 = r1.json()["id"]
+
+                with open("tests/fixtures/spk_1772197204_1772197238887.itts", "rb") as f2:
+                    r2 = await client.post(
+                        "/api/bundles",
+                        files={"file": ("test2.itts", f2, "application/octet-stream")},
+                    )
+                assert r2.status_code == 201
+                bundle_id_2 = r2.json()["id"]
+
+                response = await client.post(
+                    "/api/concat",
+                    json={
+                        "title": "Test Concat",
+                        "items": [
+                            {"bundle_id": bundle_id_1, "segments": [0]},
+                            {"bundle_id": bundle_id_2, "segments": [0]},
+                        ],
+                        "silence_ms": 100,
+                    },
+                )
+
+                assert response.status_code == 201
+                job_id = response.json()["job_id"]
+
+                for _ in range(10):
+                    status_resp = await client.get(f"/api/jobs/{job_id}")
+                    assert status_resp.status_code == 200
+                    if status_resp.json()["status"] == "completed":
+                        break
+                    await asyncio.sleep(0.1)
+                else:
+                    pytest.fail("Concat job did not complete")
+    finally:
+        app.dependency_overrides.clear()

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.models.database import Export, Job
 from app.models.schemas import ExportRequest, JobResponse
+from app.services.concat_service import ConcatService
 from app.services.export_service import ExportService
 from app.services.storage_service import StorageService
 
@@ -34,6 +35,13 @@ async def _process_export_job_with_logging(service: ExportService, job_id: int) 
         logger.exception("Export job failed", extra={"job_id": job_id})
 
 
+async def _process_concat_job_with_logging(service: ConcatService, job_id: int) -> None:
+    try:
+        await service.process_concat_job(job_id)
+    except Exception:
+        logger.exception("Concat job failed", extra={"job_id": job_id})
+
+
 @router.post("/export", status_code=status.HTTP_201_CREATED)
 async def create_export(
     request: ExportRequest,
@@ -50,6 +58,28 @@ async def create_export(
     )
 
     background_tasks.add_task(_process_export_job_with_logging, service, job_id)
+    return {"job_id": job_id}
+
+
+@router.post("/concat", status_code=status.HTTP_201_CREATED)
+async def create_concat(
+    request: dict,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, int]:
+    title = str(request.get("title") or "").strip()
+    items = request.get("items") or []
+    silence_ms = int(request.get("silence_ms", 100))
+
+    if not title:
+        raise HTTPException(status_code=422, detail="Missing title")
+    if not isinstance(items, list) or not items:
+        raise HTTPException(status_code=422, detail="items must be a non-empty list")
+
+    storage = StorageService()
+    service = ConcatService(db, storage)
+    job_id = await service.create_concat_job(title=title, items=items, silence_ms=silence_ms)
+    background_tasks.add_task(_process_concat_job_with_logging, service, job_id)
     return {"job_id": job_id}
 
 
