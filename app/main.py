@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.api.bundles import router as bundles_router
 from app.api.export import router as export_router
+from app.api.playlists import router as playlists_router
 from app.config import settings
 
 app = FastAPI(
@@ -11,6 +12,7 @@ app = FastAPI(
 
 app.include_router(bundles_router)
 app.include_router(export_router)
+app.include_router(playlists_router)
 
 
 @app.get("/health")
