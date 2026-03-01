@@ -20,5 +20,7 @@ logs/
 .idea
 *.md
 docs/
+!docs/
+!docs/bundle.schema.json
 tests/
 scripts/

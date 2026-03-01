@@ -14,6 +14,7 @@ RUN uv sync --no-dev
 # Copy application code
 COPY app/ ./app/
 COPY bundle_tools/ ./bundle_tools/
+COPY docs/bundle.schema.json ./docs/bundle.schema.json
 
 # Create data directories
 RUN mkdir -p /app/data/db /app/data/logs /app/data/backups
