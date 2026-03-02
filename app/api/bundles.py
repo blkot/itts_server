@@ -86,12 +86,15 @@ async def upload_bundle(
     if generated_sha256:
         duplicate = await bundle_service.check_duplicate(generated_sha256)
         if duplicate:
+            existing_bundle = await bundle_service.get_bundle(duplicate.id)
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail={
                     "status": "duplicate",
                     "message": "This ITTS already exists in your library",
-                    "existing_bundle": BundleResponse.model_validate(duplicate).model_dump(),
+                    "existing_bundle": (
+                        existing_bundle.model_dump() if existing_bundle else {"id": duplicate.id}
+                    ),
                 },
             )
 
