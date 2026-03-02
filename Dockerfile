@@ -22,5 +22,9 @@ RUN mkdir -p /app/data/db /app/data/logs /app/data/backups
 # Expose port
 EXPOSE 8000
 
+# Container healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD uv run python -c "import httpx; httpx.get('http://localhost:8000/health')" || exit 1
+
 # Run the application
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
