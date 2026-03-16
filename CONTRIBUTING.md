@@ -32,11 +32,11 @@ Thank you for contributing.
 
 ## Testing
 
-The public repository does not include the private test suite or fixture `.itts` files.
+The public repository includes the Python test suite, but it does not include private binary fixture `.itts` files.
 
-- Run any local tests you have before submitting changes.
+- Run the committed test suite before submitting changes.
 - Use `scripts/manual_test.sh` or `scripts/manual_test.ps1` with `ITTS_SAMPLE_PATH` pointing to a local `.itts` file.
-- Document manual verification steps in your pull request when tests are unavailable.
+- Integration tests use generated sample bundles, so they do not depend on committed private media files.
 
 ## Pull Requests
 

@@ -113,7 +113,7 @@ See `.env.example` for configuration options.
 
 ### Private Development Assets
 
-The public repository does not include the private test suite or `.itts` fixture files. For local validation, provide your own sample bundle with `ITTS_SAMPLE_PATH`.
+The public repository includes the Python test suite, but it does not include private binary `.itts` fixtures. Integration tests use generated sample bundles, and manual validation can use your own local sample bundle via `ITTS_SAMPLE_PATH`.
 
 ## Project Structure
 
@@ -121,6 +121,7 @@ The public repository does not include the private test suite or `.itts` fixture
 - `app/models/` - Database models and schemas
 - `app/services/` - Business logic
 - `bundle_tools/` - ITTS format utilities
+- `tests/` - Unit and integration tests
 - `scripts/` - Manual test scripts
 - `docs/frontend/` - Frontend integration reference docs
 
