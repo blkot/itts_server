@@ -4,8 +4,15 @@
 set -e
 
 API_URL="${API_URL:-http://localhost:8000}"
+ITTS_SAMPLE_PATH="${ITTS_SAMPLE_PATH:-tests/fixtures/spk_1772197182_1772197202988.itts}"
 
 echo "=== ITTS Backend Manual Test Suite ==="
+
+if [ ! -f "$ITTS_SAMPLE_PATH" ]; then
+  echo "Sample ITTS file not found: $ITTS_SAMPLE_PATH"
+  echo "Set ITTS_SAMPLE_PATH to a local .itts file before running this script."
+  exit 1
+fi
 
 # 1. Health check
 echo "[1] Health check..."
@@ -14,7 +21,7 @@ curl -s "$API_URL/health" | jq '.'
 # 2. Upload bundle
 echo "[2] Uploading sample ITTS..."
 UPLOAD_RAW=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/bundles" \
-  -F "file=@tests/fixtures/spk_1772197182_1772197202988.itts")
+  -F "file=@$ITTS_SAMPLE_PATH")
 UPLOAD_BODY=$(echo "$UPLOAD_RAW" | sed '$d')
 UPLOAD_STATUS=$(echo "$UPLOAD_RAW" | tail -n 1)
 

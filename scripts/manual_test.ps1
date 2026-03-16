@@ -3,6 +3,7 @@
 
 $ErrorActionPreference = "Stop"
 $ApiUrl = if ($env:API_URL) { $env:API_URL } else { "http://localhost:8000" }
+$IttsSamplePath = if ($env:ITTS_SAMPLE_PATH) { $env:ITTS_SAMPLE_PATH } else { "tests/fixtures/spk_1772197182_1772197202988.itts" }
 
 Write-Host "=== ITTS Backend Manual Test Suite ===" -ForegroundColor Cyan
 
@@ -24,19 +25,39 @@ try {
 # 2. Upload bundle
 Write-Host "`n[2] Uploading sample ITTS..." -ForegroundColor Yellow
 try {
-    $fixturePath = "tests/fixtures/spk_1772197182_1772197202988.itts"
-    if (-not (Test-Path $fixturePath)) {
-        Write-Host "Fixture file not found: $fixturePath" -ForegroundColor Red
+    if (-not (Test-Path $IttsSamplePath)) {
+        Write-Host "Sample ITTS file not found: $IttsSamplePath" -ForegroundColor Red
+        Write-Host "Set ITTS_SAMPLE_PATH to a local .itts file before running this script." -ForegroundColor Red
         exit 1
     }
 
     $form = @{
-        file = Get-Item -Path $fixturePath
+        file = Get-Item -Path $IttsSamplePath
     }
-    $uploadResponse = Invoke-RestMethod -Uri "$ApiUrl/api/bundles" -Method Post -Form $form
-    $bundleId = $uploadResponse.id
-    Write-Host "Uploaded bundle ID: $bundleId" -ForegroundColor Green
-    Get-FormattedJson $uploadResponse
+    try {
+        $uploadResponse = Invoke-RestMethod -Uri "$ApiUrl/api/bundles" -Method Post -Form $form
+        $bundleId = $uploadResponse.id
+        Write-Host "Using bundle ID: $bundleId" -ForegroundColor Green
+        Get-FormattedJson $uploadResponse
+    } catch {
+        $response = $_.Exception.Response
+        if (-not $response -or $response.StatusCode.value__ -ne 409) {
+            throw
+        }
+
+        $reader = [System.IO.StreamReader]::new($response.GetResponseStream())
+        $body = $reader.ReadToEnd()
+        $reader.Dispose()
+        $duplicateResponse = $body | ConvertFrom-Json
+
+        if ($duplicateResponse.detail.status -ne "duplicate") {
+            throw
+        }
+
+        $bundleId = $duplicateResponse.detail.existing_bundle.id
+        Write-Host "Using existing bundle ID: $bundleId" -ForegroundColor Green
+        Get-FormattedJson $duplicateResponse
+    }
 } catch {
     Write-Host "Failed: $_" -ForegroundColor Red
     exit 1

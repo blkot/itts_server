@@ -1,5 +1,9 @@
 # ITTS Backend
 
+[![Python](https://img.shields.io/badge/python-3.11-blue)](https://www.python.org/downloads/release/python-3110/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Docker](https://img.shields.io/badge/docker-ready-blue)](https://www.docker.com/)
+
 **Backend-only REST API service** for managing ITTS (IndexTTS Bundle) files.
 
 > **Note:** This is a pure backend project. For frontend development documentation, see [`docs/frontend/`](docs/frontend/README.md). The frontend should be built as a separate project.
@@ -14,6 +18,21 @@
 - Auto-playlists grouped by reference/emotion voices
 - Backup and restore
 
+## Project Stats
+
+- **Status:** Production-ready backend
+- **Runtime:** FastAPI + SQLite + MinIO
+- **Lock file:** `uv.lock` committed for reproducible installs
+- **Branch model:** `develop` for active work, `main` for releases
+
+## Contributing
+
+Contribution guidelines are in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+Security reporting guidance is in [SECURITY.md](SECURITY.md).
+
 ## Quick Start
 
 ### Prerequisites
@@ -25,16 +44,16 @@
 
 ```bash
 # Install dependencies
-uv sync
+uv sync --dev
 
 # Start services
 docker-compose up -d
 
-# Run tests
-uv run pytest
+# Initialize the database
+docker-compose exec -T itts-api uv run python -c "import asyncio; from app.db.init_db import init_db; asyncio.run(init_db())"
 
-# Manual testing
-./scripts/manual_test.sh
+# Run manual validation with a local ITTS file
+ITTS_SAMPLE_PATH=/path/to/sample.itts ./scripts/manual_test.sh
 ```
 
 ### API Documentation
@@ -92,14 +111,18 @@ app.add_middleware(
 
 See `.env.example` for configuration options.
 
+### Private Development Assets
+
+The public repository does not include the private test suite or `.itts` fixture files. For local validation, provide your own sample bundle with `ITTS_SAMPLE_PATH`.
+
 ## Project Structure
 
 - `app/api/` - FastAPI endpoints
 - `app/models/` - Database models and schemas
 - `app/services/` - Business logic
 - `bundle_tools/` - ITTS format utilities
-- `tests/` - Unit and integration tests
 - `scripts/` - Manual test scripts
+- `docs/frontend/` - Frontend integration reference docs
 
 ## Design
 
@@ -136,3 +159,7 @@ This backend provides:
 - Audio player component
 - Export configuration UI
 - Playlist management UI
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.

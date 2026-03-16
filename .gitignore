@@ -22,7 +22,6 @@ wheels/
 
 # uv
 .uv/
-uv.lock
 
 # Environment
 .env
@@ -51,7 +50,6 @@ logs/
 htmlcov/
 .pytest_cache/
 .bandit/
-/tests/
 
 # OS
 .DS_Store
@@ -65,3 +63,6 @@ Thumbs.db
 
 # Claude
 .claude/
+
+# Git metadata
+.git/
